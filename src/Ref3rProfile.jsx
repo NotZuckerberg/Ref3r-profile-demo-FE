@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { CREATORS, DEFAULT_SLUG } from "./creators.js";
 
 // ── REF3R Editable Creator Profile ───────────────────────────────────
 // Bottom-sheet customizer: color palette, header/name fonts, bio styling,
@@ -45,38 +46,30 @@ const DEFAULT_THEME = {
   bioColor: "__inkSoft",
 };
 
-const CREATOR = {
-  name: "Shikhar Sangwan",
-  handle: "captain.deltss",
-  tagline: "Do it now, or forever hold your peace.",
-  bio: "Training Hybrid — HIIT / Calisthenics / Bodybuilding",
-  location: "India",
-  niche: "Fitness",
-  stats: { ref3rScore: 302, clout: 72100, cloutDelta: 6 },
-  socials: [
-    { id: "instagram", label: "IG", color: "#E1306C", followers: "58.2K" },
-    { id: "youtube",   label: "YT", color: "#FF0000", followers: "12.4K" },
-    { id: "tiktok",    label: "TT", color: "#69C9D0", followers: "9.1K" },
-    { id: "twitter",   label: "X",  color: "#1DA1F2", followers: "4.3K" },
-  ],
-  highlights: [
-    { platform: "youtube",   title: "How I built a hybrid training split that actually works", duration: "12:48", views: "184K", channel: "Captain Deltss" },
-    { platform: "youtube",   title: "My full day of eating on a cut (3,200 kcal)", duration: "8:21", views: "97K", channel: "Captain Deltss" },
-    { platform: "instagram", title: "Full upper-body session 💪", duration: "0:58", views: "2.1M", likes: "312K" },
-    { platform: "instagram", title: "3 mistakes killing your pull-ups", duration: "0:41", views: "1.4M", likes: "201K" },
-    { platform: "tiktok",    title: "POV: leg day done right", duration: "0:22", views: "904K", likes: "88.4K", sound: "original sound - captain.deltss" },
-    { platform: "tiktok",    title: "Stop skipping your warm-up 🔥", duration: "0:18", views: "1.2M", likes: "143K", sound: "original sound - captain.deltss" },
-    { platform: "twitter",   text: "Most people don't need a new program. They need to run their current one for 12 weeks without quitting. Consistency > novelty. Every time.", likes: "4.2K", retweets: "612", time: "2h" },
-    { platform: "twitter",   text: "Reminder: progress isn't linear. A bad week doesn't erase 3 good months. Zoom out.", likes: "8.9K", retweets: "1.3K", time: "1d" },
-  ],
-};
+// ── per-creator data is loaded by slug (see creators.js) ─────────────
+// loadCreator() is the single seam: swap the body for a fetch() when you
+// move configs to a backend / KV store / Supabase, and nothing else changes.
+function getSlug() {
+  // path-based: demo.ref3r.com/nike  → "nike"
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  if (path) return path.split("/")[0].toLowerCase();
+  // query fallback: demo.ref3r.com/?creator=nike
+  const q = new URLSearchParams(window.location.search).get("creator");
+  return q ? q.toLowerCase() : null;
+}
 
-const DEFAULT_COLLABS = [
-  { id: "c1", brand: "BigMuscles Nutrition", desc: "Use code BMDELTS for an exclusive discount", code: "BMDELTS", verified: true, accent: "#f97316" },
-  { id: "c2", brand: "1:1 Coaching", desc: "Personal hybrid training programs", link: "Apply →", verified: false, accent: "#4ade80" },
-  { id: "c3", brand: "Gymshark", desc: "Shop my training fits — code DELTS10", code: "DELTS10", verified: true, accent: "#3b82f6" },
-  { id: "c4", brand: "Meal Plan PDF", desc: "My exact cutting nutrition guide", link: "Get it →", verified: false, accent: "#a855f7" },
-];
+function loadCreator(slug) {
+  const key = slug && CREATORS[slug] ? slug : DEFAULT_SLUG;
+  const entry = CREATORS[key];
+  return {
+    slug: key,
+    known: !!(slug && CREATORS[slug]),
+    requestedSlug: slug,
+    creator: entry.creator,
+    collabs: entry.collabs,
+    themeOverride: entry.theme || null,
+  };
+}
 
 const PLATFORMS = {
   youtube:   { name: "YouTube",   color: "#FF0000", label: "YT" },
@@ -99,6 +92,11 @@ function rgba(hex, a) {
 function luminance(hex) {
   try { const { r, g, b } = hexToRgb(hex); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; }
   catch { return 0.5; }
+}
+function initials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
 }
 
 function buildTokens(theme) {
@@ -183,7 +181,7 @@ function PlayButton({ size = 54 }) {
   return <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", color: "#111", fontSize: size * 0.4, boxShadow: "0 8px 30px rgba(0,0,0,0.45)", paddingLeft: 3 }}>▶</div>;
 }
 
-function YouTubeCard({ item, T }) {
+function YouTubeCard({ item, T, creator }) {
   return (
     <div style={{ borderRadius: 16, overflow: "hidden", background: T.panel, border: `1px solid ${T.line}` }}>
       <div style={{ position: "relative", aspectRatio: "16/9", cursor: "pointer", background: "linear-gradient(135deg,#2a1010,#0f0f0f)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -192,7 +190,7 @@ function YouTubeCard({ item, T }) {
         <span style={{ position: "absolute", top: 8, left: 8, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: "#FF0000", color: "#fff" }}>▶ YOUTUBE</span>
       </div>
       <div style={{ padding: "12px 14px", display: "flex", gap: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.primarySoft, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 12, fontWeight: 700 }}>SS</div>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.primarySoft, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 12, fontWeight: 700 }}>{initials(creator.name)}</div>
         <div>
           <div style={{ fontSize: 13.5, color: T.ink, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{item.title}</div>
           <div style={{ fontSize: 11.5, color: T.inkSoft }}>{item.channel} · {item.views} views</div>
@@ -218,14 +216,14 @@ function VerticalCard({ item, T }) {
   );
 }
 
-function TwitterCard({ item, T }) {
+function TwitterCard({ item, T, creator }) {
   return (
     <div style={{ borderRadius: 16, padding: "14px 16px", background: T.panel, border: `1px solid ${T.line}`, cursor: "pointer" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 13, fontWeight: 700 }}>SS</div>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 13, fontWeight: 700 }}>{initials(creator.name)}</div>
         <div style={{ flex: 1, lineHeight: 1.2 }}>
-          <div style={{ fontSize: 13.5, color: T.ink, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>{CREATOR.name} <span style={{ color: GREEN, fontSize: 12 }}>✓</span></div>
-          <div style={{ fontSize: 12, color: T.inkFaint }}>@{CREATOR.handle} · {item.time}</div>
+          <div style={{ fontSize: 13.5, color: T.ink, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>{creator.name} <span style={{ color: GREEN, fontSize: 12 }}>✓</span></div>
+          <div style={{ fontSize: 12, color: T.inkFaint }}>@{creator.handle} · {item.time}</div>
         </div>
         <span style={{ fontSize: 16, color: T.ink, fontWeight: 700 }}>𝕏</span>
       </div>
@@ -235,13 +233,13 @@ function TwitterCard({ item, T }) {
   );
 }
 
-function HighlightCard({ item, T }) {
-  if (item.platform === "youtube") return <YouTubeCard item={item} T={T} />;
-  if (item.platform === "twitter") return <TwitterCard item={item} T={T} />;
+function HighlightCard({ item, T, creator }) {
+  if (item.platform === "youtube") return <YouTubeCard item={item} T={T} creator={creator} />;
+  if (item.platform === "twitter") return <TwitterCard item={item} T={T} creator={creator} />;
   return <VerticalCard item={item} T={T} />;
 }
 
-function HighlightsCarousel({ items, T }) {
+function HighlightsCarousel({ items, T, creator }) {
   const [idx, setIdx] = useState(0);
   const touch = useRef({ x: 0, active: false });
   useEffect(() => { setIdx(0); }, [items]);
@@ -265,7 +263,7 @@ function HighlightsCarousel({ items, T }) {
               transition: "transform .5s cubic-bezier(.22,1,.36,1), opacity .5s ease, filter .5s ease",
             }}>
               <div style={{ height: 400, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "100%" }}><HighlightCard item={item} T={T} /></div>
+                <div style={{ width: "100%" }}><HighlightCard item={item} T={T} creator={creator} /></div>
               </div>
             </div>
           );
@@ -480,8 +478,13 @@ function inp() {
 //  PAGE
 // ════════════════════════════════════════════════════════════════════
 export default function Ref3rProfile() {
-  const [theme, setTheme] = useState(DEFAULT_THEME);
-  const [collabs, setCollabs] = useState(DEFAULT_COLLABS);
+  // resolve which creator demo to show from the URL (once)
+  const loaded = useMemo(() => loadCreator(getSlug()), []);
+  const creator = loaded.creator;
+  const STORAGE_KEY = `ref3r-profile-config:${loaded.slug}`;
+
+  const [theme, setTheme] = useState(() => ({ ...DEFAULT_THEME, ...(loaded.themeOverride || {}) }));
+  const [collabs, setCollabs] = useState(loaded.collabs);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState("all");
@@ -492,23 +495,23 @@ export default function Ref3rProfile() {
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
 
   const T = useMemo(() => buildTokens(theme), [theme]);
-  const clout = useCountUp(CREATOR.stats.clout, 1600);
+  const clout = useCountUp(creator.stats.clout, 1600);
 
-  // load persisted config
+  // load persisted config (scoped to this creator slug)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("ref3r-profile-config");
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const cfg = JSON.parse(raw);
-        if (cfg.theme) setTheme({ ...DEFAULT_THEME, ...cfg.theme });
+        if (cfg.theme) setTheme({ ...DEFAULT_THEME, ...(loaded.themeOverride || {}), ...cfg.theme });
         if (cfg.collabs) setCollabs(cfg.collabs);
       }
     } catch (e) { /* no saved config */ }
-  }, []);
+  }, [STORAGE_KEY]);
 
   const handleSave = () => {
     try {
-      localStorage.setItem("ref3r-profile-config", JSON.stringify({ theme, collabs }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme, collabs }));
       setSaved(true); setTimeout(() => setSaved(false), 1800);
     } catch (e) {
       setSaved(true); setTimeout(() => setSaved(false), 1800);
@@ -540,27 +543,27 @@ export default function Ref3rProfile() {
         <div ref={heroRef} onMouseMove={handleMove} className="rise" style={{ position: "relative", borderRadius: 28, overflow: "hidden", padding: "36px 24px 28px", textAlign: "center", background: `radial-gradient(80% 60% at ${mouse.x * 100}% ${mouse.y * 100}%, ${rgba(theme.primary, 0.18)}, transparent 60%), linear-gradient(180deg, ${T.secondary}, ${T.page})`, border: `1px solid ${rgba(theme.primary, 0.14)}`, transition: "background .2s ease-out" }}>
           <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 16px" }}>
             <div style={{ position: "absolute", inset: -3, borderRadius: "50%", background: `conic-gradient(from 0deg, ${T.primary}, ${rgba(theme.primary,0.6)}, ${T.primary})`, filter: "blur(2px)" }} />
-            <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack }}>SS</div>
+            <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack }}>{initials(creator.name)}</div>
             <div className="liveDot" style={{ position: "absolute", bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: GREEN, border: `3px solid ${T.page}` }} />
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-            <h1 style={{ fontFamily: FONTS[theme.nameFont].stack, fontSize: 28, fontWeight: 800, color: nameColor, margin: 0 }}>{CREATOR.name}</h1>
+            <h1 style={{ fontFamily: FONTS[theme.nameFont].stack, fontSize: 28, fontWeight: 800, color: nameColor, margin: 0 }}>{creator.name}</h1>
             <span style={{ color: GREEN, fontSize: 18 }}>✓</span>
           </div>
-          <div style={{ color: T.inkFaint, fontSize: 14, marginBottom: 12 }}>@{CREATOR.handle}</div>
+          <div style={{ color: T.inkFaint, fontSize: 14, marginBottom: 12 }}>@{creator.handle}</div>
 
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16, flexWrap: "wrap" }}>
-            {[{ t: "Lvl 1", brand: true }, { t: "OG", brand: true }, { t: `📍 ${CREATOR.location}`, brand: false }, { t: `#${CREATOR.niche}`, brand: false }].map((b, i) => (
+            {[{ t: "Lvl 1", brand: true }, { t: "OG", brand: true }, { t: `📍 ${creator.location}`, brand: false }, { t: `#${creator.niche}`, brand: false }].map((b, i) => (
               <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, fontWeight: 600, background: b.brand ? rgba(GREEN, 0.12) : T.panelAlt, color: b.brand ? GREEN : T.inkSoft, border: `1px solid ${b.brand ? rgba(GREEN, 0.28) : T.line}` }}>{b.t}</span>
             ))}
           </div>
 
-          <p style={{ fontFamily: FONTS[theme.bioFont].stack, color: bioColor, fontSize: 16, fontWeight: theme.bioBold ? 700 : 500, fontStyle: theme.bioItalic ? "italic" : "normal", margin: "0 0 5px", lineHeight: 1.4 }}>"{CREATOR.tagline}"</p>
-          <p style={{ fontFamily: FONTS[theme.bioFont].stack, color: T.inkFaint, fontSize: 13, fontStyle: theme.bioItalic ? "italic" : "normal", fontWeight: theme.bioBold ? 600 : 400, margin: 0 }}>{CREATOR.bio}</p>
+          <p style={{ fontFamily: FONTS[theme.bioFont].stack, color: bioColor, fontSize: 16, fontWeight: theme.bioBold ? 700 : 500, fontStyle: theme.bioItalic ? "italic" : "normal", margin: "0 0 5px", lineHeight: 1.4 }}>"{creator.tagline}"</p>
+          <p style={{ fontFamily: FONTS[theme.bioFont].stack, color: T.inkFaint, fontSize: 13, fontStyle: theme.bioItalic ? "italic" : "normal", fontWeight: theme.bioBold ? 600 : 400, margin: 0 }}>{creator.bio}</p>
 
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
-            {CREATOR.socials.map((s) => (
+            {creator.socials.map((s) => (
               <div key={s.id} style={{ textAlign: "center" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 14, cursor: "pointer", background: `linear-gradient(135deg, ${s.color}, ${s.color}cc)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13, boxShadow: `0 6px 16px ${s.color}40`, transition: "transform .2s" }}
                   onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-3px) scale(1.05)"} onMouseLeave={(e) => e.currentTarget.style.transform = "none"}>{s.label}</div>
@@ -584,8 +587,8 @@ export default function Ref3rProfile() {
 
         {/* SCORE + CLOUT */}
         <div className="rise" style={{ animationDelay: ".15s", borderRadius: 20, padding: "14px 18px", background: T.panel, border: `1px solid ${T.line}`, display: "flex", alignItems: "center", gap: 16 }}>
-          <ScoreRing score={CREATOR.stats.ref3rScore} T={T} />
-          <div style={{ flex: 1 }}><StatPill label="Clout" value={Math.round(clout).toLocaleString()} delta={CREATOR.stats.cloutDelta} T={T} /></div>
+          <ScoreRing score={creator.stats.ref3rScore} T={T} />
+          <div style={{ flex: 1 }}><StatPill label="Clout" value={Math.round(clout).toLocaleString()} delta={creator.stats.cloutDelta} T={T} /></div>
         </div>
 
         {/* COLLABS */}
@@ -628,7 +631,7 @@ export default function Ref3rProfile() {
               })}
             </div>
           </div>
-          {(() => { const shown = CREATOR.highlights.filter((h) => tab === "all" || h.platform === tab); return <HighlightsCarousel key={tab} items={shown} T={T} />; })()}
+          {(() => { const shown = creator.highlights.filter((h) => tab === "all" || h.platform === tab); return <HighlightsCarousel key={tab} items={shown} T={T} creator={creator} />; })()}
         </div>
 
         {/* FOOTER */}
