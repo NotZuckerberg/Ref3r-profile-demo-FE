@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { CREATORS, DEFAULT_SLUG } from "./creators.js";
 
+// API base: empty = same origin (backend serves this frontend on Railway).
+// Override with VITE_API_BASE if the API is on a different host.
+const API_BASE = import.meta.env.VITE_API_BASE || "";
+
 // ── REF3R Editable Creator Profile ───────────────────────────────────
 // Bottom-sheet customizer: color palette, header/name fonts, bio styling,
 // and editable collaborations. Persists via window.storage (artifact API)
@@ -513,13 +517,13 @@ function inp() {
 //  PAGE
 // ════════════════════════════════════════════════════════════════════
 export default function Ref3rProfile() {
-  // resolve which creator demo to show from the URL (once)
-  const loaded = useMemo(() => loadCreator(getSlug()), []);
-  const creator = loaded.creator;
-  const STORAGE_KEY = `ref3r-profile-config:${loaded.slug}`;
+  // resolve slug from URL once; bundled config is the instant fallback
+  const slug = useMemo(() => getSlug(), []);
+  const fallback = useMemo(() => loadCreator(slug), [slug]);
 
-  const [theme, setTheme] = useState(() => ({ ...DEFAULT_THEME, ...(loaded.themeOverride || {}) }));
-  const [collabs, setCollabs] = useState(loaded.collabs);
+  const [creator, setCreator] = useState(fallback.creator);
+  const [theme, setTheme] = useState(() => ({ ...DEFAULT_THEME, ...(fallback.themeOverride || {}) }));
+  const [collabs, setCollabs] = useState(fallback.collabs);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState("all");
@@ -532,23 +536,35 @@ export default function Ref3rProfile() {
   const T = useMemo(() => buildTokens(theme), [theme]);
   const clout = useCountUp(creator.stats.clout, 1600);
 
-  // load persisted config (scoped to this creator slug)
+  // load config from the API (falls back silently to bundled data on error)
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const cfg = JSON.parse(raw);
-        if (cfg.theme) setTheme({ ...DEFAULT_THEME, ...(loaded.themeOverride || {}), ...cfg.theme });
-        if (cfg.collabs) setCollabs(cfg.collabs);
-      }
-    } catch (e) { /* no saved config */ }
-  }, [STORAGE_KEY]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/creators/${encodeURIComponent(slug || DEFAULT_SLUG)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !data?.creator) return;
+        setCreator(data.creator);
+        if (data.collabs) setCollabs(data.collabs);
+        setTheme({ ...DEFAULT_THEME, ...(data.theme || {}) });
+      } catch (e) { /* offline / no backend → keep bundled fallback */ }
+    })();
+    return () => { cancelled = true; };
+  }, [slug]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme, collabs }));
+      const res = await fetch(`${API_BASE}/api/creators/${encodeURIComponent(fallback.slug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creator, collabs, theme }),
+      });
+      if (!res.ok) throw new Error("save failed");
       setSaved(true); setTimeout(() => setSaved(false), 1800);
     } catch (e) {
+      // fallback: keep a local copy so the user doesn't lose work
+      try { localStorage.setItem(`ref3r-profile-config:${fallback.slug}`, JSON.stringify({ theme, collabs })); } catch {}
       setSaved(true); setTimeout(() => setSaved(false), 1800);
     }
   };

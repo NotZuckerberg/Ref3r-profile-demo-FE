@@ -1,16 +1,8 @@
-// ── Per-creator demo configs ─────────────────────────────────────────
-// Each key is the URL slug: demo.ref3r.com/<slug>
-// Add a new prospect = add a new entry here. No redeploy of logic needed,
-// just rebuild with the new data (or move this to a fetch() later — see
-// loadCreator() in Ref3rProfile.jsx for the seam).
-//
-// A creator entry has: { creator, collabs, theme? }
-//   creator  → profile shown in the hero, stats, highlights
-//   collabs  → collaboration tiles
-//   theme    → optional palette/font overrides (falls back to DEFAULT_THEME)
+// Seed configs used to populate the database the first time the server boots
+// against an empty table. After that, edits live in Postgres — this file is
+// only the initial content. Keep slugs lowercase.
 
-export const CREATORS = {
-  // ── default / fallback demo ────────────────────────────────────────
+export const SEED = {
   deltss: {
     creator: {
       name: "Shikhar Sangwan",
@@ -43,9 +35,9 @@ export const CREATORS = {
       { id: "c3", brand: "Gymshark", desc: "Shop my training fits — code DELTS10", code: "DELTS10", verified: true, accent: "#3b82f6" },
       { id: "c4", brand: "Meal Plan PDF", desc: "My exact cutting nutrition guide", link: "Get it →", verified: false, accent: "#a855f7" },
     ],
+    theme: null,
   },
 
-  // ── example second prospect (fashion) — duplicate & edit per outreach ─
   elena: {
     creator: {
       name: "Elena Vasseur",
@@ -72,10 +64,8 @@ export const CREATORS = {
       { id: "c1", brand: "Maison Lumière", desc: "Atelier capsule — code ELENA15", code: "ELENA15", verified: true, accent: "#b08d4f" },
       { id: "c2", brand: "Styling Sessions", desc: "1:1 personal wardrobe consults", link: "Book now →", verified: false, accent: "#8c6f9e" },
     ],
-    // optional palette override for this prospect
     theme: { primary: "#b08d4f", secondary: "#1c1614", tertiary: "#100c0b" },
   },
 };
 
-// The slug used when no slug is in the URL (your "showcase" demo).
 export const DEFAULT_SLUG = "deltss";
