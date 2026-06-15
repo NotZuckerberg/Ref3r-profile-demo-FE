@@ -589,7 +589,13 @@ export default function Ref3rProfile() {
           <div style={{ color: T.inkFaint, fontSize: 14, marginBottom: 12 }}>@{creator.handle}</div>
 
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16, flexWrap: "wrap" }}>
-            {[{ t: "Lvl 1", brand: true }, { t: "OG", brand: true }, { t: `📍 ${creator.location}`, brand: false }, { t: `#${creator.niche}`, brand: false }].map((b, i) => (
+            {[
+              { t: "Lvl 1", brand: true },
+              { t: "OG", brand: true },
+              { t: `📍 ${creator.location}`, brand: false },
+              ...(Array.isArray(creator.niche) ? creator.niche : [creator.niche])
+                .filter(Boolean).slice(0, 3).map((n) => ({ t: `#${n}`, brand: false })),
+            ].map((b, i) => (
               <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, fontWeight: 600, background: b.brand ? rgba(GREEN, 0.12) : T.panelAlt, color: b.brand ? GREEN : T.inkSoft, border: `1px solid ${b.brand ? rgba(GREEN, 0.28) : T.line}` }}>{b.t}</span>
             ))}
           </div>

@@ -53,7 +53,7 @@ export const CREATORS = {
       tagline: "Style is the only language that never goes out of fashion.",
       bio: "Editorial styling · Slow fashion · Paris ⇄ Milan",
       location: "Paris, France",
-      niche: "Fashion",
+      niche: ["Fashion", "Lifestyle", "Beauty"],
       stats: { ref3rScore: 418, clout: 256000, cloutDelta: 9 },
       socials: [
         { id: "instagram", label: "IG", color: "#E1306C", followers: "412K" },
