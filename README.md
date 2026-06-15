@@ -10,14 +10,22 @@ Go to **`demo.ref3r.com/admin`**. It's password-gated (see `ADMIN_TOKEN`
 below). From there you can:
 
 - **Create a new creator** — a form for slug, name, handle, tagline, bio,
-  location, niche(s), REF3R score, clout, and social follower counts. The new
-  demo is live at `demo.ref3r.com/<slug>` the moment you save.
+  location, niche(s), profile picture, REF3R score, clout, and social follower
+  counts. The new demo is live at `demo.ref3r.com/<slug>` the moment you save.
 - **List / open / delete** every creator.
 - **Reset** a seeded creator back to its original data.
 
 After creating a creator, click **Open** to go to their live page and tune the
 palette, fonts, bio styling, highlights, and collabs inline with the Edit
 button — those inline edits stay open (no password) so prospects can play too.
+
+### Profile pictures
+
+In the create form you can either **paste an image URL** (e.g. the creator's
+real Instagram/YouTube avatar) or **upload a file**. Uploads are stored in the
+database as base64 (capped at 600KB — resize large photos first, or use a URL).
+If no picture is set, the page falls back to the creator's initials. The photo
+shows in the hero and on the YouTube/Twitter highlight cards.
 
 ### Setting the admin password
 

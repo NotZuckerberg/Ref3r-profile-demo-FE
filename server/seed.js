@@ -46,6 +46,8 @@ export const SEED = {
       bio: "Editorial styling · Slow fashion · Paris ⇄ Milan",
       location: "Paris, France",
       niche: ["Fashion", "Lifestyle", "Beauty"],
+      // avatar: "https://...jpg"  ← optional; paste a URL or upload in /admin
+      avatar: "",
       stats: { ref3rScore: 418, clout: 256000, cloutDelta: 9 },
       socials: [
         { id: "instagram", label: "IG", color: "#E1306C", followers: "412K" },

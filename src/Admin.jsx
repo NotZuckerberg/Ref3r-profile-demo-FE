@@ -136,7 +136,8 @@ export default function Admin() {
 }
 
 function CreateForm({ authHeaders, onDone, onCancel }) {
-  const [f, setF] = useState({ slug: "", name: "", handle: "", tagline: "", bio: "", location: "", niche: "", ref3rScore: "", clout: "", cloutDelta: "" });
+  const [f, setF] = useState({ slug: "", name: "", handle: "", tagline: "", bio: "", location: "", niche: "", ref3rScore: "", clout: "", cloutDelta: "", avatar: "" });
+  const [avatarErr, setAvatarErr] = useState("");
   const [socials, setSocials] = useState([
     { id: "instagram", label: "IG", color: "#E1306C", followers: "" },
     { id: "youtube", label: "YT", color: "#FF0000", followers: "" },
@@ -147,6 +148,18 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
   const [err, setErr] = useState("");
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
+  const MAX_AVATAR_BYTES = 600 * 1024; // 600KB cap on uploads
+  const onFile = (file) => {
+    setAvatarErr("");
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setAvatarErr("Please choose an image file."); return; }
+    if (file.size > MAX_AVATAR_BYTES) { setAvatarErr("Image too large (max 600KB). Try a smaller one or paste a URL."); return; }
+    const reader = new FileReader();
+    reader.onload = () => set("avatar", reader.result); // data:image/...;base64,...
+    reader.onerror = () => setAvatarErr("Couldn't read that file.");
+    reader.readAsDataURL(file);
+  };
+
   const submit = async () => {
     setErr(""); setBusy(true);
     const niche = f.niche.includes(",") ? f.niche.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 3) : f.niche.trim();
@@ -155,6 +168,7 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
       creator: {
         name: f.name.trim(), handle: f.handle.trim() || f.slug.trim(), tagline: f.tagline.trim(),
         bio: f.bio.trim(), location: f.location.trim(), niche,
+        avatar: f.avatar || "",
         stats: { ref3rScore: Number(f.ref3rScore) || 0, clout: Number(f.clout) || 0, cloutDelta: Number(f.cloutDelta) || 0 },
         socials: socials.filter((s) => s.followers.trim()),
         highlights: [],
@@ -179,6 +193,32 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
       {field("Handle", f.handle, (v) => set("handle", v), "username (defaults to slug)")}
       {field("Tagline", f.tagline, (v) => set("tagline", v), "Short quote / motto")}
       {field("Bio", f.bio, (v) => set("bio", v), "One-line description")}
+
+      {/* profile picture */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={ui.label}>Profile picture</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", flexShrink: 0, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#71717a", fontSize: 11 }}>
+            {f.avatar
+              ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : (f.name ? f.name.trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase() : "—")}
+          </div>
+          <div style={{ flex: 1 }}>
+            <input style={ui.input} value={f.avatar.startsWith("data:") ? "" : f.avatar}
+              onChange={(e) => set("avatar", e.target.value)}
+              placeholder={f.avatar.startsWith("data:") ? "Uploaded file ✓" : "Paste image URL"}
+              disabled={f.avatar.startsWith("data:")} />
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <label style={{ ...ui.btnGhost, fontSize: 12, padding: "6px 11px", cursor: "pointer" }}>
+                Upload file
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => onFile(e.target.files?.[0])} />
+              </label>
+              {f.avatar && <button style={{ ...ui.btnGhost, fontSize: 12, padding: "6px 11px" }} onClick={() => { set("avatar", ""); setAvatarErr(""); }}>Clear</button>}
+            </div>
+            {avatarErr && <div style={{ color: "#f87171", fontSize: 11.5, marginTop: 6 }}>{avatarErr}</div>}
+          </div>
+        </div>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         {field("Location", f.location, (v) => set("location", v), "City, Country")}
         {field("Niche(s) — up to 3, comma-separated", f.niche, (v) => set("niche", v), "Fashion, Beauty")}

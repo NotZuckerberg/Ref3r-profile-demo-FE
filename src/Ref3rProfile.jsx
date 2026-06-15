@@ -229,7 +229,7 @@ function YouTubeCard({ item, T, creator }) {
         <span style={{ position: "absolute", top: 8, left: 8, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: "#FF0000", color: "#fff" }}>▶ YOUTUBE</span>
       </div>
       <div style={{ padding: "12px 14px", display: "flex", gap: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.primarySoft, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 12, fontWeight: 700 }}>{initials(creator.name)}</div>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.primarySoft, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 12, fontWeight: 700, overflow: "hidden" }}>{creator.avatar ? <img src={creator.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.currentTarget.style.display = "none"; }} /> : initials(creator.name)}</div>
         <div>
           <div style={{ fontSize: 13.5, color: T.ink, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{item.title}</div>
           <div style={{ fontSize: 11.5, color: T.inkSoft }}>{item.channel} · {item.views} views</div>
@@ -259,7 +259,7 @@ function TwitterCard({ item, T, creator }) {
   return (
     <div style={{ borderRadius: 16, padding: "14px 16px", background: T.panel, border: `1px solid ${T.line}`, cursor: "pointer" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 13, fontWeight: 700 }}>{initials(creator.name)}</div>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, fontSize: 13, fontWeight: 700, overflow: "hidden" }}>{creator.avatar ? <img src={creator.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.currentTarget.style.display = "none"; }} /> : initials(creator.name)}</div>
         <div style={{ flex: 1, lineHeight: 1.2 }}>
           <div style={{ fontSize: 13.5, color: T.ink, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>{creator.name} <span style={{ color: GREEN, fontSize: 12 }}>✓</span></div>
           <div style={{ fontSize: 12, color: T.inkFaint }}>@{creator.handle} · {item.time}</div>
@@ -594,7 +594,11 @@ export default function Ref3rProfile() {
         <div ref={heroRef} onMouseMove={handleMove} className="rise" style={{ position: "relative", borderRadius: 28, overflow: "hidden", padding: "36px 24px 28px", textAlign: "center", background: `radial-gradient(80% 60% at ${mouse.x * 100}% ${mouse.y * 100}%, ${rgba(theme.primary, 0.18)}, transparent 60%), linear-gradient(180deg, ${T.secondary}, ${T.page})`, border: `1px solid ${rgba(theme.primary, 0.14)}`, transition: "background .2s ease-out" }}>
           <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 16px" }}>
             <div style={{ position: "absolute", inset: -3, borderRadius: "50%", background: `conic-gradient(from 0deg, ${T.primary}, ${rgba(theme.primary,0.6)}, ${T.primary})`, filter: "blur(2px)" }} />
-            <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack }}>{initials(creator.name)}</div>
+            <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack, overflow: "hidden" }}>
+              {creator.avatar
+                ? <img src={creator.avatar} alt={creator.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                : initials(creator.name)}
+            </div>
             <div className="liveDot" style={{ position: "absolute", bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: GREEN, border: `3px solid ${T.page}` }} />
           </div>
 
