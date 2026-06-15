@@ -238,7 +238,7 @@ laura: {
       { id: "c2", brand: "Grab", desc: "Get RM10 off your next order using this UNCADAMG", code: "UNCADAMG", verified: false, accent: "#8c6f9e" },
     ],
     // optional palette override for this prospect
-    theme: { primary: "#b38941", secondary: "#ac5b38", tertiary: "#100c0b" },
+    theme: { primary: "#eee8dd", secondary: "#ac5b38", tertiary: "#100c0b" },
   }, 
 };
 
