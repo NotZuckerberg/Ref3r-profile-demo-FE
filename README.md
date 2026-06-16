@@ -11,7 +11,9 @@ below). From there you can:
 
 - **Create a new creator** — a form for slug, name, handle, tagline, bio,
   location, niche(s), profile picture, REF3R score, clout, and social follower
-  counts. The new demo is live at `demo.ref3r.com/<slug>` the moment you save.
+  counts. Check any platforms under **Highlights** to add 3 editable highlight
+  descriptions each (views/likes are auto-filled). The new demo is live at
+  `demo.ref3r.com/<slug>` the moment you save.
 - **List / open / delete** every creator.
 - **Reset** a seeded creator back to its original data.
 

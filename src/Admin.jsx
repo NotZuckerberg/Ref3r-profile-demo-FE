@@ -148,6 +148,19 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
   const [err, setErr] = useState("");
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
+  // highlights: per platform, on/off + 3 editable descriptions
+  const HL_PLATFORMS = [
+    { id: "youtube", label: "YouTube", field: "title", ph: "Video title" },
+    { id: "instagram", label: "Instagram Reel", field: "title", ph: "Reel caption" },
+    { id: "tiktok", label: "TikTok", field: "title", ph: "TikTok caption" },
+    { id: "twitter", label: "X / Twitter", field: "text", ph: "Tweet text" },
+  ];
+  const [hl, setHl] = useState(() =>
+    Object.fromEntries(HL_PLATFORMS.map((p) => [p.id, { on: false, items: ["", "", ""] }]))
+  );
+  const toggleHl = (id) => setHl((s) => ({ ...s, [id]: { ...s[id], on: !s[id].on } }));
+  const setHlItem = (id, i, v) => setHl((s) => ({ ...s, [id]: { ...s[id], items: s[id].items.map((x, j) => j === i ? v : x) } }));
+
   const MAX_AVATAR_BYTES = 600 * 1024; // 600KB cap on uploads
   const onFile = (file) => {
     setAvatarErr("");
@@ -163,15 +176,34 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
   const submit = async () => {
     setErr(""); setBusy(true);
     const niche = f.niche.includes(",") ? f.niche.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 3) : f.niche.trim();
+
+    // build highlights from checked platforms (3 each), random stats
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const views = () => { const k = rand(80, 2400); return k >= 1000 ? `${(k / 1000).toFixed(1)}M` : `${k}K`; };
+    const likes = () => { const k = rand(12, 480); return `${k}K`; };
+    const dur = () => `${rand(0, 14)}:${String(rand(10, 59)).padStart(2, "0")}`;
+    const handle = f.handle.trim() || f.slug.trim();
+    const highlights = [];
+    for (const p of HL_PLATFORMS) {
+      if (!hl[p.id].on) continue;
+      hl[p.id].items.forEach((text, i) => {
+        const desc = text.trim() || `${p.label} highlight ${i + 1}`;
+        if (p.id === "youtube") highlights.push({ platform: "youtube", title: desc, duration: dur(), views: views(), channel: f.name.trim() });
+        else if (p.id === "instagram") highlights.push({ platform: "instagram", title: desc, duration: `0:${rand(20, 59)}`, views: views(), likes: likes() });
+        else if (p.id === "tiktok") highlights.push({ platform: "tiktok", title: desc, duration: `0:${rand(15, 45)}`, views: views(), likes: likes(), sound: `original sound - ${handle}` });
+        else if (p.id === "twitter") highlights.push({ platform: "twitter", text: desc, likes: `${rand(1, 12)}.${rand(0, 9)}K`, retweets: `${rand(100, 1900)}`, time: `${rand(1, 23)}h` });
+      });
+    }
+
     const payload = {
       slug: f.slug.trim().toLowerCase(),
       creator: {
-        name: f.name.trim(), handle: f.handle.trim() || f.slug.trim(), tagline: f.tagline.trim(),
+        name: f.name.trim(), handle, tagline: f.tagline.trim(),
         bio: f.bio.trim(), location: f.location.trim(), niche,
         avatar: f.avatar || "",
         stats: { ref3rScore: Number(f.ref3rScore) || 0, clout: Number(f.clout) || 0, cloutDelta: Number(f.cloutDelta) || 0 },
         socials: socials.filter((s) => s.followers.trim()),
-        highlights: [],
+        highlights,
       },
       collabs: [],
       theme: null,
@@ -238,13 +270,34 @@ function CreateForm({ authHeaders, onDone, onCancel }) {
           </div>
         ))}
       </div>
+
+      {/* highlights */}
+      <label style={ui.label}>Highlights — check a platform to add 3 (edit the descriptions)</label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+        {HL_PLATFORMS.map((p) => (
+          <div key={p.id} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: hl[p.id].on ? 12 : "10px 12px", background: "rgba(255,255,255,0.02)" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, fontWeight: 600 }}>
+              <input type="checkbox" checked={hl[p.id].on} onChange={() => toggleHl(p.id)} />
+              {p.label}
+            </label>
+            {hl[p.id].on && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 10 }}>
+                {hl[p.id].items.map((v, i) => (
+                  <input key={i} style={{ ...ui.input, fontSize: 13 }} value={v} placeholder={`${p.ph} ${i + 1}`}
+                    onChange={(e) => setHlItem(p.id, i, e.target.value)} />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
       {err && <div style={{ color: "#f87171", fontSize: 12.5, marginBottom: 10 }}>{err}</div>}
       <div style={{ display: "flex", gap: 8 }}>
         <button style={{ ...ui.btn, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={submit}>{busy ? "Creating…" : "Create"}</button>
         <button style={ui.btnGhost} onClick={onCancel}>Cancel</button>
       </div>
       <div style={{ color: "#52525b", fontSize: 11.5, marginTop: 12, lineHeight: 1.5 }}>
-        After creating, click "Open" on the new creator to add highlights, collabs, and tune the palette inline.
+        After creating, click "Open" on the new creator to add collabs and tune the palette inline.
       </div>
     </div>
   );
