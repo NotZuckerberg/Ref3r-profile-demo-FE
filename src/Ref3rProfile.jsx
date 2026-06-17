@@ -524,6 +524,9 @@ export default function Ref3rProfile() {
   const [creator, setCreator] = useState(fallback.creator);
   const [theme, setTheme] = useState(() => ({ ...DEFAULT_THEME, ...(fallback.themeOverride || {}) }));
   const [collabs, setCollabs] = useState(fallback.collabs);
+  // the slug to SAVE to: the real URL slug if present, else the resolved default.
+  // Never the bundled-file fallback (which collapses unknown slugs to default).
+  const [saveSlug, setSaveSlug] = useState(slug || fallback.slug);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState("all");
@@ -548,6 +551,9 @@ export default function Ref3rProfile() {
         setCreator(data.creator);
         if (data.collabs) setCollabs(data.collabs);
         setTheme({ ...DEFAULT_THEME, ...(data.theme || {}) });
+        // save back to the slug we actually requested (the URL), so editing a
+        // DB-only creator never writes to the default slug by mistake.
+        setSaveSlug(slug || data.slug);
       } catch (e) { /* offline / no backend → keep bundled fallback */ }
     })();
     return () => { cancelled = true; };
@@ -555,7 +561,7 @@ export default function Ref3rProfile() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/creators/${encodeURIComponent(fallback.slug)}`, {
+      const res = await fetch(`${API_BASE}/api/creators/${encodeURIComponent(saveSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ creator, collabs, theme }),
@@ -564,7 +570,7 @@ export default function Ref3rProfile() {
       setSaved(true); setTimeout(() => setSaved(false), 1800);
     } catch (e) {
       // fallback: keep a local copy so the user doesn't lose work
-      try { localStorage.setItem(`ref3r-profile-config:${fallback.slug}`, JSON.stringify({ theme, collabs })); } catch {}
+      try { localStorage.setItem(`ref3r-profile-config:${saveSlug}`, JSON.stringify({ theme, collabs })); } catch {}
       setSaved(true); setTimeout(() => setSaved(false), 1800);
     }
   };
