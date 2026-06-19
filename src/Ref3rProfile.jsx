@@ -48,6 +48,7 @@ const DEFAULT_THEME = {
   bioItalic: true,
   bioBold: false,
   bioColor: "__inkSoft",
+  collabsHeading: "Collaborations",
 };
 
 // ── per-creator data is loaded by slug (see creators.js) ─────────────
@@ -449,6 +450,12 @@ function EditorSheet({ open, onClose, theme, setTheme, collabs, setCollabs, onSa
               <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "16px 0" }} />
               <FontPicker label="Section header font (Highlights, Collaborations)" value={theme.headerFont} onChange={(v) => set({ headerFont: v })} keys={FONT_KEYS} />
               <ColorField label="Header color" value={theme.headerColor} onChange={(v) => set({ headerColor: v })} theme={theme} />
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "#a1a1aa", marginBottom: 6, fontWeight: 600 }}>"Collaborations" heading text</div>
+                <input value={theme.collabsHeading ?? "Collaborations"} onChange={(e) => set({ collabsHeading: e.target.value })}
+                  placeholder="Collaborations"
+                  style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "#fafafa", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              </div>
             </div>
           )}
 
@@ -598,19 +605,19 @@ export default function Ref3rProfile() {
 
         {/* HERO */}
         <div ref={heroRef} onMouseMove={handleMove} className="rise" style={{ position: "relative", borderRadius: 28, overflow: "hidden", padding: "36px 24px 28px", textAlign: "center", background: `radial-gradient(80% 60% at ${mouse.x * 100}% ${mouse.y * 100}%, ${rgba(theme.primary, 0.18)}, transparent 60%), linear-gradient(180deg, ${T.secondary}, ${T.page})`, border: `1px solid ${rgba(theme.primary, 0.14)}`, transition: "background .2s ease-out" }}>
-          <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 16px" }}>
+          <div style={{ position: "relative", width: 124, height: 124, margin: "0 auto 12px" }}>
             <div style={{ position: "absolute", inset: -3, borderRadius: "50%", background: `conic-gradient(from 0deg, ${T.primary}, ${rgba(theme.primary,0.6)}, ${T.primary})`, filter: "blur(2px)" }} />
-            <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack, overflow: "hidden" }}>
+            <div style={{ position: "relative", width: 124, height: 124, borderRadius: "50%", background: T.secondary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: T.primary, border: `3px solid ${T.page}`, fontFamily: FONTS[theme.nameFont].stack, overflow: "hidden" }}>
               {creator.avatar
                 ? <img src={creator.avatar} alt={creator.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.currentTarget.style.display = "none"; }} />
                 : initials(creator.name)}
             </div>
-            <div className="liveDot" style={{ position: "absolute", bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: GREEN, border: `3px solid ${T.page}` }} />
+            <div className="liveDot" style={{ position: "absolute", bottom: 6, right: 6, width: 18, height: 18, borderRadius: "50%", background: GREEN, border: `3px solid ${T.page}` }} />
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-            <h1 style={{ fontFamily: FONTS[theme.nameFont].stack, fontSize: 28, fontWeight: 800, color: nameColor, margin: 0 }}>{creator.name}</h1>
-            <span style={{ color: GREEN, fontSize: 18 }}>✓</span>
+            <h1 style={{ fontFamily: FONTS[theme.nameFont].stack, fontSize: 23, fontWeight: 800, color: nameColor, margin: 0 }}>{creator.name}</h1>
+            <span style={{ color: GREEN, fontSize: 16 }}>✓</span>
           </div>
           <div style={{ color: T.inkFaint, fontSize: 14, marginBottom: 12 }}>@{creator.handle}</div>
 
@@ -662,7 +669,7 @@ export default function Ref3rProfile() {
 
         {/* COLLABS */}
         <div className="rise" style={{ animationDelay: ".2s", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontFamily: FONTS[theme.headerFont].stack, fontSize: 19, fontWeight: 800, color: headerColor, paddingLeft: 4 }}>Collaborations</div>
+          <div style={{ fontFamily: FONTS[theme.headerFont].stack, fontSize: 19, fontWeight: 800, color: headerColor, paddingLeft: 4 }}>{theme.collabsHeading || "Collaborations"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {collabs.map((c) => (
               <div key={c.id} style={{ borderRadius: 16, overflow: "hidden", background: T.panel, border: `1px solid ${T.line}`, display: "flex", flexDirection: "column", transition: "transform .2s, border-color .2s" }}
